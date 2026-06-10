@@ -6,10 +6,9 @@ from datetime import datetime
 
 # אתחול שירותי AWS
 s3 = boto3.client('s3')
-rekognition = boto3.client('rekognition') # עכשיו אנחנו בפרנקפורט אז אין צורך לציין אזור
+rekognition = boto3.client('rekognition')
 dynamodb = boto3.resource('dynamodb')
 
-# שימו לב: הכניסו כאן את שם הבאקט של התמונות שיצרתם בשלב 2!
 BUCKET_NAME = 'smartreceipt-uploads-final-2026'
 TABLE_NAME = 'Receipts'
 
