@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartReceipt - ניהול קבלות</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; text-align: center; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+        button { background-color: #ff9900; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-size: 16px; margin-top: 15px;}
+        button:hover { background-color: #e68a00; }
+        #result { margin-top: 20px; padding: 10px; background: #eef; border-radius: 5px; display: none; text-align: right;}
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>העלאת קבלה חדשה</h2>
+        <p>בחר תמונה של הקבלה שלך והמערכת תחלץ ממנה את הנתונים באופן אוטומטי.</p>
+        
+        <input type="file" id="fileInput" accept="image/*">
+        <br>
+        <button onclick="uploadReceipt()">עבד קבלה</button>
+
+        <div id="result">
+            <h4>תוצאות הניתוח:</h4>
+            <p id="statusText">מעבד נתונים...</p>
+            <p><strong>טקסט שזוהה:</strong> <span id="extractedText"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // הכתובת החדשה והמעודכנת של ה-API שלכן ב-AWS
+        const API_GATEWAY_URL = 'https://4i7nyfhd21.execute-api.us-east-1.amazonaws.com/upload';
+
+        function uploadReceipt() {
+            const fileInput = document.getElementById('fileInput');
+            const resultDiv = document.getElementById('result');
+            const statusText = document.getElementById('statusText');
+            const extractedText = document.getElementById('extractedText');
+
+            if (fileInput.files.length === 0) {
+                alert('נא לבחור קובץ קבלה להעלאה.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            resultDiv.style.display = 'block';
+            statusText.innerText = 'מעלה ומנתח את הקבלה...';
+            extractedText.innerText = '';
+
+            // המרת התמונה ל-Base64
+            reader.onloadend = async function() {
+                const base64Image = reader.result.split(',')[1];
+
+                try {
+                    const response = await fetch(API_GATEWAY_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ image: base64Image })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        statusText.innerText = 'הקבלה נשמרה ונותחה בהצלחה!';
+                        extractedText.innerText = data.text;
+                    } else {
+                        statusText.innerText = 'שגיאה בעיבוד הקבלה.';
+                        extractedText.innerText = data.error || 'שגיאה לא ידועה.';
+                    }
+                } catch (error) {
+                    statusText.innerText = 'שגיאת תקשורת עם השרת.';
+                    console.error(error);
+                }
+            };
+
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>
